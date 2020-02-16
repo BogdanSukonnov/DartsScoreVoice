@@ -6,23 +6,37 @@
 //  Copyright © 2020 Evermind. All rights reserved.
 //
 
-import Speech
 import Foundation
+import Speech
 
-class SpeechRecognitionService: ObservableObject {
+class SpeechRecognitionService: ObservableObject  {
     
     @Published var transcription = ""
+    
     @Published var status = "Initial"
+    
     @Published var isListening = false
-    let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))!
-    var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
-    var recognitionTask: SFSpeechRecognitionTask?
-    let audioEngine = AVAudioEngine()
-    var isAuthorized: Bool = false
-    var authorisationStatus = "not checked"
-    let startWord: String
-    let endWord: String
-    let counter: Counter
+    
+    private let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))!
+    
+    private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
+    
+    private var recognitionTask: SFSpeechRecognitionTask?
+    
+    private let audioEngine = AVAudioEngine()
+   
+    private var isAuthorized: Bool = false
+    
+    private var authorisationStatus = "not checked"
+    
+    private let startWord: String
+    
+    private let endWord: String
+    
+    private let counter: Counter
+    
+    private var isTapInstalled = false
+    
     
     init(startWord: String, endWord: String, counter: Counter) {
         self.startWord = startWord
@@ -30,7 +44,8 @@ class SpeechRecognitionService: ObservableObject {
         self.counter = counter
     }
     
-    private func onResult(result: SFSpeechRecognitionResult) {
+    
+    private func onResult(result: SFSpeechRecognitionResult, audioSession: AVAudioSession) {
         
         print("ROBOT HEAR: \(result.bestTranscription.formattedString)")
         
@@ -39,20 +54,21 @@ class SpeechRecognitionService: ObservableObject {
         if self.transcription.contains(self.startWord) && self.transcription.contains(self.endWord) {
                         
             let slice = self.transcription.slice(from: self.startWord, to: self.endWord) ?? ""
+            
+            self.transcription = "";
             self.counter.add(text: slice)
+            
+            self.stopRecording()
+            //self.safeStartListening()
         }
     }
         
-    func initListening() throws {
+    public func initListening() throws {
         
         if !self.isAuthorized {
             self.requestAuthorization()
         } else {
-            do {
-                try self.startListening()
-            } catch {
-            }
-            
+            self.safeStartListening()
         }
     }
     
@@ -84,10 +100,7 @@ class SpeechRecognitionService: ObservableObject {
                 print(self.authorisationStatus)
                 self.buildStatus()
                 if self.isAuthorized {
-                    do {
-                        try self.startListening()
-                    } catch {
-                    }
+                    self.safeStartListening()
                 }
             }
         }
@@ -98,7 +111,16 @@ class SpeechRecognitionService: ObservableObject {
         self.status = "Auth: \(self.authorisationStatus); isListening: \(self.isListening)"
     }
     
+    private func safeStartListening() {
+        do {
+            try self.startListening()
+        } catch {
+        }
+    }
+    
     private func startListening() throws {
+        
+        print("Start startListening")
         
         // Cancel the previous task if it's running.
         recognitionTask?.cancel()
@@ -114,6 +136,7 @@ class SpeechRecognitionService: ObservableObject {
         recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
         guard let recognitionRequest = recognitionRequest else { fatalError("Unable to create a SFSpeechAudioBufferRecognitionRequest object") }
         recognitionRequest.shouldReportPartialResults = true
+        recognitionRequest.contextualStrings = [self.startWord, self.endWord, "double", "triple", "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "eighteen", "nineteen", "twenty", "twentyfive", "fifty"]
         
         // Keep speech recognition data on device
         if #available(iOS 13, *) {
@@ -127,27 +150,38 @@ class SpeechRecognitionService: ObservableObject {
             
             if let result = result {
                 // Update the text view with the results.isFinal = result.isFinal
-                self.onResult(result: result)
+                self.onResult(result: result, audioSession: audioSession)
                 isFinal = result.isFinal
             }
             
-            if error != nil || isFinal {
+            if error != nil ||  isFinal{
+                
                 // Stop recognizing speech if there is a problem.
                 self.audioEngine.stop()
                 inputNode.removeTap(onBus: 0)
 
                 self.isListening = false
+                
                 self.recognitionRequest = nil
                 self.recognitionTask = nil
+                
                 self.buildStatus()
+                
+                if isFinal {
+                    // restart listening
+                    self.safeStartListening()
+                }
             }
         }
 
         // Configure the microphone input.
-        let recordingFormat = inputNode.outputFormat(forBus: 0)
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { (buffer: AVAudioPCMBuffer, when: AVAudioTime) in
-            self.recognitionRequest?.append(buffer)
-        }
+        //if !self.isTapInstalled {
+            let recordingFormat = inputNode.outputFormat(forBus: 0)
+            inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { (buffer: AVAudioPCMBuffer, when: AVAudioTime) in
+                self.recognitionRequest?.append(buffer)
+                }
+            self.isTapInstalled = true
+        //}
         
         audioEngine.prepare()
         try
@@ -155,9 +189,35 @@ class SpeechRecognitionService: ObservableObject {
             self.isListening = true
         
         self.buildStatus()
-                
+        
+        print("End startListening")
+    }
+
+    
+    public func stopRecording() {
+        
+        print("Start stopRecording")
+        self.isListening = false
+        
+        // Call this method explicitly to let the speech recognizer know that no more audio input is coming.
+        self.recognitionTask?.finish()
+        self.recognitionTask?.cancel()
+        self.audioEngine.stop()
+        self.recognitionRequest?.endAudio()
+        
+        //self.recognitionRequest = nil
+        
+        // For audio buffer–based recognition, recognition does not finish until this method is called, so be sure to call it when the audio source is exhausted.
+        //self.recognitionTask?.finish()
+        
+        //self.recognitionTask = nil
+        
+        //self.audioEngine.inputNode.removeTap(onBus: 0)
+        
+        print("End stopRecording")
     }
 }
+
 
 extension String {
 
