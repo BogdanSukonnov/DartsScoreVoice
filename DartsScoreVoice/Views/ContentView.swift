@@ -9,14 +9,27 @@
 import SwiftUI
 
 struct ContentView: View {
-    @ObservedObject var speechRecognitionService = SpeechRecognitionService()
-    @State private var isListening: Bool = false
+    
+    let startWord: String = "start"
+    let endWord: String = "stop"
+    
+    @ObservedObject var counter: Counter
+    @ObservedObject var speechRecognitionService: SpeechRecognitionService
+    
+    init() {
+        let oneCounter = Counter()
+        self.counter = oneCounter
+        speechRecognitionService = SpeechRecognitionService(startWord: "start", endWord: "stop", counter: oneCounter)
+    }
+    
     var body: some View {
         NavigationView {
             VStack {
-                Text("Status: \(speechRecognitionService.status)")
-                Text(speechRecognitionService.transcription)
-                Text("second")
+                Text("Status: \(self.speechRecognitionService.status)")
+                Spacer()
+                Text(self.speechRecognitionService.transcription)
+                Spacer()
+                Text(self.counter.count)
                 Spacer()
                 Button(action: buttonAction) {
                     Text("Button")

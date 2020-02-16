@@ -11,17 +11,49 @@ import Foundation
 
 class SpeechRecognitionService: ObservableObject {
     
-    @Published var transcription: String = ""
-    @Published var status: String = "Initial"
-    var isListening: Bool = false
+    @Published var transcription = ""
+    @Published var status = "Initial"
+    @Published var isListening = false
     let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))!
     var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     var recognitionTask: SFSpeechRecognitionTask?
     let audioEngine = AVAudioEngine()
     var isAuthorized: Bool = false
-    var authorisationStatus: String = "not checked"
+    var authorisationStatus = "not checked"
+    let startWord: String
+    let endWord: String
+    let counter: Counter
     
-    init() {        
+    init(startWord: String, endWord: String, counter: Counter) {
+        self.startWord = startWord
+        self.endWord = endWord
+        self.counter = counter
+    }
+    
+    private func onResult(result: SFSpeechRecognitionResult) {
+        
+        print("ROBOT HEAR: \(result.bestTranscription.formattedString)")
+        
+        self.transcription = result.bestTranscription.formattedString.lowercased()
+        
+        if self.transcription.contains(self.startWord) && self.transcription.contains(self.endWord) {
+                        
+            let slice = self.transcription.slice(from: self.startWord, to: self.endWord) ?? ""
+            self.counter.add(text: slice)
+        }
+    }
+        
+    func initListening() throws {
+        
+        if !self.isAuthorized {
+            self.requestAuthorization()
+        } else {
+            do {
+                try self.startListening()
+            } catch {
+            }
+            
+        }
     }
     
     private func requestAuthorization() {
@@ -61,22 +93,9 @@ class SpeechRecognitionService: ObservableObject {
         }
     }
     
-    func buildStatus() {
+    private func buildStatus() {
         
         self.status = "Auth: \(self.authorisationStatus); isListening: \(self.isListening)"
-    }
-    
-    func initListening() throws {
-        
-        if !self.isAuthorized {
-            self.requestAuthorization()
-        } else {
-            do {
-                try self.startListening()
-            } catch {
-            }
-            
-        }
     }
     
     private func startListening() throws {
@@ -108,8 +127,8 @@ class SpeechRecognitionService: ObservableObject {
             
             if let result = result {
                 // Update the text view with the results.isFinal = result.isFinal
-                print("ROBOT LISTEN: \(result.bestTranscription.formattedString)")
-                self.transcription = result.bestTranscription.formattedString
+                self.onResult(result: result)
+                isFinal = result.isFinal
             }
             
             if error != nil || isFinal {
@@ -120,6 +139,7 @@ class SpeechRecognitionService: ObservableObject {
                 self.isListening = false
                 self.recognitionRequest = nil
                 self.recognitionTask = nil
+                self.buildStatus()
             }
         }
 
@@ -136,5 +156,17 @@ class SpeechRecognitionService: ObservableObject {
         
         self.buildStatus()
                 
+    }
+}
+
+extension String {
+
+    func slice(from: String, to: String) -> String? {
+
+        return (range(of: from)?.upperBound).flatMap { substringFrom in
+            (range(of: to, range: substringFrom..<endIndex)?.lowerBound).map { substringTo in
+                String(self[substringFrom..<substringTo])
+            }
+        }
     }
 }

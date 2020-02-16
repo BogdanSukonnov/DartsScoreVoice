@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		43C037DC23F8554800AF98FA /* SpeechRecognitionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43C037DB23F8554800AF98FA /* SpeechRecognitionService.swift */; };
 		43C037E123F9370D00AF98FA /* TextToSpeechService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43C037E023F9370D00AF98FA /* TextToSpeechService.swift */; };
+		43C037E323F957CC00AF98FA /* Counter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43C037E223F957CC00AF98FA /* Counter.swift */; };
 		43FBF29623F7C93C004291F9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43FBF29523F7C93C004291F9 /* AppDelegate.swift */; };
 		43FBF29823F7C93C004291F9 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43FBF29723F7C93C004291F9 /* SceneDelegate.swift */; };
 		43FBF29A23F7C93C004291F9 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43FBF29923F7C93C004291F9 /* ContentView.swift */; };
@@ -20,6 +21,7 @@
 /* Begin PBXFileReference section */
 		43C037DB23F8554800AF98FA /* SpeechRecognitionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechRecognitionService.swift; sourceTree = "<group>"; };
 		43C037E023F9370D00AF98FA /* TextToSpeechService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextToSpeechService.swift; sourceTree = "<group>"; };
+		43C037E223F957CC00AF98FA /* Counter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Counter.swift; sourceTree = "<group>"; };
 		43FBF29223F7C93C004291F9 /* DartsScoreVoice.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DartsScoreVoice.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		43FBF29523F7C93C004291F9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		43FBF29723F7C93C004291F9 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -54,6 +56,7 @@
 			children = (
 				43C037DB23F8554800AF98FA /* SpeechRecognitionService.swift */,
 				43C037E023F9370D00AF98FA /* TextToSpeechService.swift */,
+				43C037E223F957CC00AF98FA /* Counter.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -178,6 +181,7 @@
 			files = (
 				43FBF29623F7C93C004291F9 /* AppDelegate.swift in Sources */,
 				43C037DC23F8554800AF98FA /* SpeechRecognitionService.swift in Sources */,
+				43C037E323F957CC00AF98FA /* Counter.swift in Sources */,
 				43FBF29823F7C93C004291F9 /* SceneDelegate.swift in Sources */,
 				43FBF29A23F7C93C004291F9 /* ContentView.swift in Sources */,
 				43C037E123F9370D00AF98FA /* TextToSpeechService.swift in Sources */,
