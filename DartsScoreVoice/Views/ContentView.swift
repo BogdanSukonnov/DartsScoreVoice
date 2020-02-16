@@ -14,44 +14,23 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             VStack {
+                Text("Status: \(speechRecognitionService.status)")
                 Text(speechRecognitionService.transcription)
                 Text("second")
                 Spacer()
                 Button(action: buttonAction) {
-                    Text("Start listening")
+                    Text("Button")
                 }
             }
         }.onAppear{
-//            do {
-//                try self.speechRecognitionService.startRecording { (transcription) in
-//                    self.name = transcription
-//                    print(transcription)
-//                }
-//            } catch {
-//                print(error)
-//            }
+            do {
+                try self.speechRecognitionService.initListening()
+            } catch {
+            }
         }
     }
     
     func buttonAction() {
-        if !self.isListening {
-            self.speechRecognitionService.requestAuthorization()
-            do {
-                try self.speechRecognitionService.startRecording()
-            } catch {
-            }
-            self.isListening = true
-        }
-        
-        //name += "a"
-//        do {
-//            try self.speechRecognitionService.startRecording { (transcription) in
-//                self.name = transcription
-//                print(transcription)
-//            }
-//        } catch {
-//            print(error)
-//        }
     }
 }
 

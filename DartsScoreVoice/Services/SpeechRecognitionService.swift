@@ -12,18 +12,19 @@ import Foundation
 class SpeechRecognitionService: ObservableObject {
     
     @Published var transcription: String = ""
+    @Published var status: String = "Initial"
+    var isListening: Bool = false
     let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))!
     var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     var recognitionTask: SFSpeechRecognitionTask?
     let audioEngine = AVAudioEngine()
-    //@Published var transcription: String = ""
+    var isAuthorized: Bool = false
+    var authorisationStatus: String = "not checked"
     
     init() {        
     }
     
-//    func startRecording(completion: @escaping (String) -> Void) throws {
-    
-    func requestAuthorization() {
+    private func requestAuthorization() {
         
         // Asynchronously make the authorization request.
         SFSpeechRecognizer.requestAuthorization { authStatus in
@@ -33,33 +34,52 @@ class SpeechRecognitionService: ObservableObject {
             OperationQueue.main.addOperation {
                 switch authStatus {
                 case .authorized:
-                    print("Authorized")
-                    //self.recordButton.isEnabled = true
+                    self.isAuthorized = true
+                    self.authorisationStatus = "Authorized"
                     
                 case .denied:
-                    print("denied")
-                    //self.recordButton.isEnabled = false
-                    //self.recordButton.setTitle("User denied access to speech recognition", for: .disabled)
+                    self.authorisationStatus = "User denied access to speech recognition"
                     
                 case .restricted:
-                    print("restricted")
-                    //self.recordButton.isEnabled = false
-                    //self.recordButton.setTitle("Speech recognition restricted on this device", for: .disabled)
+                    self.authorisationStatus = "Speech recognition restricted on this device"
                     
                 case .notDetermined:
-                    print("notDetermined")
-                    //self.recordButton.isEnabled = false
-                    //self.recordButton.setTitle("Speech recognition not yet authorized", for: .disabled)
+                    self.authorisationStatus = "Speech recognition not yet authorized"
                     
                 default:
-                    print("Not authorized")
-                    //self.recordButton.isEnabled = false
+                    self.authorisationStatus = "Not authorized"
+                }
+                print(self.authorisationStatus)
+                self.buildStatus()
+                if self.isAuthorized {
+                    do {
+                        try self.startListening()
+                    } catch {
+                    }
                 }
             }
         }
     }
     
-    func startRecording() throws {
+    func buildStatus() {
+        
+        self.status = "Auth: \(self.authorisationStatus); isListening: \(self.isListening)"
+    }
+    
+    func initListening() throws {
+        
+        if !self.isAuthorized {
+            self.requestAuthorization()
+        } else {
+            do {
+                try self.startListening()
+            } catch {
+            }
+            
+        }
+    }
+    
+    private func startListening() throws {
         
         // Cancel the previous task if it's running.
         recognitionTask?.cancel()
@@ -88,7 +108,7 @@ class SpeechRecognitionService: ObservableObject {
             
             if let result = result {
                 // Update the text view with the results.isFinal = result.isFinal
-                print("Text \(result.bestTranscription.formattedString)")
+                print("ROBOT LISTEN: \(result.bestTranscription.formattedString)")
                 self.transcription = result.bestTranscription.formattedString
             }
             
@@ -97,11 +117,9 @@ class SpeechRecognitionService: ObservableObject {
                 self.audioEngine.stop()
                 inputNode.removeTap(onBus: 0)
 
+                self.isListening = false
                 self.recognitionRequest = nil
                 self.recognitionTask = nil
-
-//                self.recordButton.isEnabled = true
-//                self.recordButton.setTitle("Start Recording", for: [])
             }
         }
 
@@ -112,31 +130,11 @@ class SpeechRecognitionService: ObservableObject {
         }
         
         audioEngine.prepare()
-        try audioEngine.start()
+        try
+            audioEngine.start()
+            self.isListening = true
         
-        // Let the user know to start talking.
-//        textView.text = "(Go ahead, I'm listening)"
+        self.buildStatus()
+                
     }
-    
-//    private func recognize(completion: @escaping (String) -> Void) throws {
-//        let node = audioEngine.inputNode
-//        let recordingFormat = node.outputFormat(forBus: 0)
-//
-//        node.installTap(onBus: 0, bufferSize: 1024,
-//                       format: recordingFormat) { [unowned self]
-//                           (buffer, _) in
-//                           self.request.append(buffer)
-//        }
-//
-//        audioEngine.prepare()
-//        try audioEngine.start()
-//
-//        recognitionTask = speechRecognizer?.recognitionTask(with: request) { (result, _) in
-//           if let transcription = result?.bestTranscription {
-//               print(transcription.formattedString)
-//               completion(transcription.formattedString)
-//               //self.textLabel.text = transcription.formattedString
-//           }
-//        }
-//    }
 }
