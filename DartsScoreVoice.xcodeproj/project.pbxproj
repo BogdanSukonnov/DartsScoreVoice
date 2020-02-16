@@ -39,6 +39,34 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		43C037DD23F9346500AF98FA /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				43FBF29923F7C93C004291F9 /* ContentView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		43C037DE23F9347A00AF98FA /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				43C037DB23F8554800AF98FA /* SpeechRecognitionService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		43C037DF23F934A200AF98FA /* Configuration */ = {
+			isa = PBXGroup;
+			children = (
+				43FBF29523F7C93C004291F9 /* AppDelegate.swift */,
+				43FBF29723F7C93C004291F9 /* SceneDelegate.swift */,
+				43FBF2A023F7C942004291F9 /* LaunchScreen.storyboard */,
+				43FBF2A323F7C942004291F9 /* Info.plist */,
+				43FBF29B23F7C942004291F9 /* Assets.xcassets */,
+			);
+			path = Configuration;
+			sourceTree = "<group>";
+		};
 		43FBF28923F7C93C004291F9 = {
 			isa = PBXGroup;
 			children = (
@@ -58,13 +86,9 @@
 		43FBF29423F7C93C004291F9 /* DartsScoreVoice */ = {
 			isa = PBXGroup;
 			children = (
-				43FBF29523F7C93C004291F9 /* AppDelegate.swift */,
-				43FBF29723F7C93C004291F9 /* SceneDelegate.swift */,
-				43FBF29923F7C93C004291F9 /* ContentView.swift */,
-				43FBF29B23F7C942004291F9 /* Assets.xcassets */,
-				43FBF2A023F7C942004291F9 /* LaunchScreen.storyboard */,
-				43C037DB23F8554800AF98FA /* SpeechRecognitionService.swift */,
-				43FBF2A323F7C942004291F9 /* Info.plist */,
+				43C037DF23F934A200AF98FA /* Configuration */,
+				43C037DE23F9347A00AF98FA /* Services */,
+				43C037DD23F9346500AF98FA /* Views */,
 				43FBF29D23F7C942004291F9 /* Preview Content */,
 			);
 			path = DartsScoreVoice;
@@ -292,7 +316,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"DartsScoreVoice/Preview Content\"";
 				DEVELOPMENT_TEAM = LWK8U36943;
 				ENABLE_PREVIEWS = YES;
-				INFOPLIST_FILE = DartsScoreVoice/Info.plist;
+				INFOPLIST_FILE = DartsScoreVoice/Configuration/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -312,7 +336,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"DartsScoreVoice/Preview Content\"";
 				DEVELOPMENT_TEAM = LWK8U36943;
 				ENABLE_PREVIEWS = YES;
-				INFOPLIST_FILE = DartsScoreVoice/Info.plist;
+				INFOPLIST_FILE = DartsScoreVoice/Configuration/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
