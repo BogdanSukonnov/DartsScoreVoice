@@ -10,16 +10,21 @@ import SwiftUI
 
 struct ContentView: View {
     
-    let startWord: String = "start"
-    let endWord: String = "stop"
+    let startWord: String
     
     @ObservedObject var counter: Counter
     @ObservedObject var speechRecognitionService: SpeechRecognitionService
+    var speaker: TextToSpeechService
     
     init() {
-        let oneCounter = Counter()
-        self.counter = oneCounter
-        speechRecognitionService = SpeechRecognitionService(startWord: "start", endWord: "stop", counter: oneCounter)
+        let doubleWord = "double"
+        let tripleWord = "triple"
+        self.startWord = "start"
+        let tempSpeaker = TextToSpeechService()
+        self.speaker = tempSpeaker
+        let tempCounter = Counter(doubleWord: doubleWord, tripleWord: tripleWord, speaker: tempSpeaker)
+        self.counter = tempCounter
+        self.speechRecognitionService = SpeechRecognitionService(startWord: startWord, counter: tempCounter, doubleWord: doubleWord, tripleWord: tripleWord, speaker: tempSpeaker)
     }
     
     var body: some View {

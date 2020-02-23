@@ -31,36 +31,82 @@ class SpeechRecognitionService: ObservableObject  {
     
     private let startWord: String
     
-    private let endWord: String
+    private let doubleWord: String
+    
+    private let tripleWord: String
     
     private let counter: Counter
     
     private var isTapInstalled = false
     
+    private let pattern: String
     
-    init(startWord: String, endWord: String, counter: Counter) {
+    private var speaker: TextToSpeechService
+    
+    init(startWord: String, counter: Counter, doubleWord: String, tripleWord: String, speaker: TextToSpeechService) {
+        self.doubleWord = doubleWord
+        self.tripleWord = tripleWord
         self.startWord = startWord
-        self.endWord = endWord
         self.counter = counter
+        self.pattern = "\(self.startWord).*?([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,25,50]+)"
+        self.speaker = speaker
     }
     
     
-    private func onResult(result: SFSpeechRecognitionResult, audioSession: AVAudioSession) {
-        
+    private func onTempResult(result: SFSpeechRecognitionResult, audioSession: AVAudioSession) {
+   
         print("ROBOT HEAR: \(result.bestTranscription.formattedString)")
         
-        self.transcription = result.bestTranscription.formattedString.lowercased()
+        transcription = result.bestTranscription.formattedString.lowercased()
         
-        if self.transcription.contains(self.startWord) && self.transcription.contains(self.endWord) {
+        if transcription.contains(startWord) && isCountString(fullString: transcription) {
                         
-            let slice = self.transcription.slice(from: self.startWord, to: self.endWord) ?? ""
-            
-            self.transcription = "";
-            self.counter.add(text: slice)
-            
-            self.stopRecording()
-            //self.safeStartListening()
+            stopRecording()
         }
+    }
+    
+    private func onFinalResult(result: SFSpeechRecognitionResult, audioSession: AVAudioSession) {
+        
+        transcription = result.bestTranscription.formattedString.lowercased()
+        
+        let countString = getCountString(fullString: transcription)
+        
+        if countString == "" {
+            speaker.say(text: "pardon?")
+            return
+        }
+        
+        var multiplier: Multiplier = .noMultiplier;
+        if transcription.contains(tripleWord) {
+            multiplier = .triple
+        } else if transcription.contains(doubleWord) {
+            multiplier = .double
+        }
+        
+        counter.add(text: countString, multiplier: multiplier)
+        
+        transcription = "";
+    }
+    
+    private func isCountString(fullString: String) -> Bool {
+        
+        return getCountString(fullString: fullString) != ""
+    }
+    
+    private func getCountString(fullString: String) -> String {
+
+        let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive)
+
+        if let match = regex?.firstMatch(in: fullString, options: [], range: NSRange(location: 0, length: fullString.utf16.count)) {
+            // match.range(at: 0) - whole match, match.range(at: 1) - first group
+            if let fullMatchRange = Range(match.range(at: 0), in: fullString), let countRange = Range(match.range(at: 1), in: fullString) {
+                // cut from transcription all before start word
+                self.transcription = String(fullString[fullMatchRange])
+            return String(fullString[countRange])
+          }
+        }
+        
+        return ""
     }
         
     public func initListening() throws {
@@ -128,15 +174,16 @@ class SpeechRecognitionService: ObservableObject  {
         
         // Configure the audio session for the app.
         let audioSession = AVAudioSession.sharedInstance()
-        try audioSession.setCategory(.record, mode: .measurement, options: .duckOthers)
+        try audioSession.setCategory(.playAndRecord, mode: .default, options: .duckOthers)
         try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+        try audioSession.overrideOutputAudioPort(.speaker)
         let inputNode = audioEngine.inputNode
 
         // Create and configure the speech recognition request.
         recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
         guard let recognitionRequest = recognitionRequest else { fatalError("Unable to create a SFSpeechAudioBufferRecognitionRequest object") }
         recognitionRequest.shouldReportPartialResults = true
-        recognitionRequest.contextualStrings = [self.startWord, self.endWord, "double", "triple", "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "eighteen", "nineteen", "twenty", "twentyfive", "fifty"]
+        recognitionRequest.contextualStrings = [self.startWord, self.doubleWord, self.tripleWord, "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "25", "50"]
         
         // Keep speech recognition data on device
         if #available(iOS 13, *) {
@@ -150,8 +197,12 @@ class SpeechRecognitionService: ObservableObject  {
             
             if let result = result {
                 // Update the text view with the results.isFinal = result.isFinal
-                self.onResult(result: result, audioSession: audioSession)
                 isFinal = result.isFinal
+                if isFinal {
+                    self.onFinalResult(result: result, audioSession: audioSession)
+                } else {
+                    self.onTempResult(result: result, audioSession: audioSession)
+                }
             }
             
             if error != nil ||  isFinal{
@@ -174,14 +225,11 @@ class SpeechRecognitionService: ObservableObject  {
             }
         }
 
-        // Configure the microphone input.
-        //if !self.isTapInstalled {
-            let recordingFormat = inputNode.outputFormat(forBus: 0)
-            inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { (buffer: AVAudioPCMBuffer, when: AVAudioTime) in
-                self.recognitionRequest?.append(buffer)
-                }
-            self.isTapInstalled = true
-        //}
+        let recordingFormat = inputNode.outputFormat(forBus: 0)
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { (buffer: AVAudioPCMBuffer, when: AVAudioTime) in
+            self.recognitionRequest?.append(buffer)
+            }
+        self.isTapInstalled = true
         
         audioEngine.prepare()
         try
@@ -199,34 +247,11 @@ class SpeechRecognitionService: ObservableObject  {
         print("Start stopRecording")
         self.isListening = false
         
-        // Call this method explicitly to let the speech recognizer know that no more audio input is coming.
         self.recognitionTask?.finish()
         self.recognitionTask?.cancel()
         self.audioEngine.stop()
         self.recognitionRequest?.endAudio()
         
-        //self.recognitionRequest = nil
-        
-        // For audio buffer–based recognition, recognition does not finish until this method is called, so be sure to call it when the audio source is exhausted.
-        //self.recognitionTask?.finish()
-        
-        //self.recognitionTask = nil
-        
-        //self.audioEngine.inputNode.removeTap(onBus: 0)
-        
         print("End stopRecording")
-    }
-}
-
-
-extension String {
-
-    func slice(from: String, to: String) -> String? {
-
-        return (range(of: from)?.upperBound).flatMap { substringFrom in
-            (range(of: to, range: substringFrom..<endIndex)?.lowerBound).map { substringTo in
-                String(self[substringFrom..<substringTo])
-            }
-        }
     }
 }

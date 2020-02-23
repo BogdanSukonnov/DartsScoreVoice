@@ -7,25 +7,20 @@
 //
 
 import Foundation
+import AVFoundation
 
-//    private func recognize(completion: @escaping (String) -> Void) throws {
-//        let node = audioEngine.inputNode
-//        let recordingFormat = node.outputFormat(forBus: 0)
-//
-//        node.installTap(onBus: 0, bufferSize: 1024,
-//                       format: recordingFormat) { [unowned self]
-//                           (buffer, _) in
-//                           self.request.append(buffer)
-//        }
-//
-//        audioEngine.prepare()
-//        try audioEngine.start()
-//
-//        recognitionTask = speechRecognizer?.recognitionTask(with: request) { (result, _) in
-//           if let transcription = result?.bestTranscription {
-//               print(transcription.formattedString)
-//               completion(transcription.formattedString)
-//               //self.textLabel.text = transcription.formattedString
-//           }
-//        }
-//    }
+class TextToSpeechService {
+       
+    private let synthesizer = AVSpeechSynthesizer()
+    
+    init() {}
+    
+    public func say(text: String) {
+        let utterance = AVSpeechUtterance(string: text)
+        utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
+        utterance.rate = 0.6
+        utterance.volume = 1.0
+
+        synthesizer.speak(utterance)
+    }
+}
