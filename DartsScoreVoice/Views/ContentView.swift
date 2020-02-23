@@ -29,17 +29,23 @@ struct ContentView: View {
     
     var body: some View {
         NavigationView {
-            VStack {
-                Text("Status: \(self.speechRecognitionService.status)")
+            HStack {
                 Spacer()
-                Text(self.speechRecognitionService.transcription)
-                Spacer()
-                Text(self.counter.count)
-                Spacer()
-                Button(action: buttonAction) {
-                    Text("Button")
+                VStack() {
+                    Spacer()
+                    Text("Status: \(self.speechRecognitionService.status)")
+                    Spacer()
+                    Text(self.speechRecognitionService.transcription)
+                    Spacer()
+                    Text(self.counter.count)
+                    Spacer()
+                    Button(action: buttonAction) {
+                        Text("Button")
+                    }
+                    Spacer()
                 }
-            }
+                Spacer()
+            }.background(Color(red: 0.051, green: 0.780, blue: 0.518)).edgesIgnoringSafeArea(.all)
         }.onAppear{
             do {
                 try self.speechRecognitionService.initListening()
